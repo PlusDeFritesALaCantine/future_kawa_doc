@@ -1,0 +1,136 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 300
+  }
+}
+
+title: |md
+  # Architecture Globale du Système
+| {near: top-center}
+
+classes: {
+  frontend: {
+    shape: rectangle
+    style.fill: "#4A90D9"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 6
+    style.shadow: true
+  }
+  backend: {
+    shape: rectangle
+    style.fill: "#F5A623"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 6
+    style.shadow: true
+  }
+  db: {
+    shape: cylinder
+    style.fill: "#7ED321"
+    style.font-color: "#1A1A1A"
+  }
+}
+
+# --- Ingestion IoT ---
+IoT: {
+  shape: hexagon
+  label: "Capteurs IoT"
+  style.fill: "#9013FE"
+  style.font-color: "#FFFFFF"
+}
+
+MQTT: {
+  shape: cloud
+  label: "Broker MQTT"
+  style.fill: "#50E3C2"
+}
+
+Database: {
+  class: db
+  label: "Base de données\ncentrale"
+}
+
+IoT -> MQTT: "publie données"
+MQTT -> Database: "transmet données"
+
+# --- Pays ---
+Pays: {
+  label: "Filiales pays"
+  style.stroke-dash: 3
+
+  Bresil: {
+    label: "Brésil"
+    front: { class: frontend; label: "Frontend" }
+    backend: { class: backend; label: "Backend" }
+    front -> backend: "requête"
+    backend -> front: "réponse"
+  }
+
+  Equateur: {
+    label: "Équateur"
+    front: { class: frontend; label: "Frontend" }
+    backend: { class: backend; label: "Backend" }
+    front -> backend: "requête"
+    backend -> front: "réponse"
+  }
+
+  Colombie: {
+    label: "Colombie"
+    front: { class: frontend; label: "Frontend" }
+    backend: { class: backend; label: "Backend" }
+    front -> backend: "requête"
+    backend -> front: "réponse"
+  }
+}
+
+Pays.Bresil.backend -> Database: "requête données"
+Database -> Pays.Bresil.backend: "envoie données"
+Pays.Equateur.backend -> Database: "requête données"
+Database -> Pays.Equateur.backend: "envoie données"
+Pays.Colombie.backend -> Database: "requête données"
+Database -> Pays.Colombie.backend: "envoie données"
+
+# --- Siège ---
+Headquarters: {
+  label: "Siège (Headquarters)"
+  style.stroke-dash: 3
+
+  front: { class: frontend; label: "Frontend" }
+  backend: { class: backend; label: "Backend" }
+  front -> backend: "requête"
+  backend -> front: "réponse"
+}
+
+Headquarters.backend -> Pays.Bresil.backend: "requête données pays"
+Pays.Bresil.backend -> Headquarters.backend: "retour données"
+Headquarters.backend -> Pays.Equateur.backend: "requête données pays"
+Pays.Equateur.backend -> Headquarters.backend: "retour données"
+Headquarters.backend -> Pays.Colombie.backend: "requête données pays"
+Pays.Colombie.backend -> Headquarters.backend: "retour données"
+
+# --- Infrastructure Kubernetes ---
+Kubernetes: {
+  label: "Cluster Kubernetes"
+  shape: rectangle
+  style.stroke-dash: 2
+  style.fill: "#F0F4F8"
+
+  ingress:    { shape: rectangle; label: "Ingress" }
+  services:   { shape: rectangle; label: "Services" }
+  pods:       { shape: circle; label: "Pods" }
+  nodes:      { shape: circle; label: "Nodes" }
+  monitoring: { shape: hexagon; label: "Monitoring"; style.fill: "#D0021B"; style.font-color: "#FFFFFF" }
+  futurekawa: { shape: hexagon; label: "Futurekawa"; style.fill: "#8B572A"; style.font-color: "#FFFFFF" }
+  postgresql: { shape: cylinder; label: "PostgreSQL"; style.fill: "#336791"; style.font-color: "#FFFFFF" }
+
+  ingress -> services: "route le trafic"
+  services -> pods: "répartit la charge"
+  pods -> nodes: "planifiés sur"
+  pods -> postgresql: "lit / écrit"
+  monitoring -> pods: "surveille"
+  monitoring -> nodes: "surveille"
+  futurekawa -> services: "expose"
+}
+
+Headquarters.backend -> Kubernetes.ingress: "déploiement / trafic entrant"
+Database -> Kubernetes.postgresql: "réplication" { style.stroke-dash: 4 }
